@@ -1,41 +1,54 @@
 import socket
 import sys
+import obsws_python as obs
 
-# Listen on all local network interfaces on port 8888
 HOST = "0.0.0.0"
 PORT = 8888
+
+# Connect to OBS Studio WebSocket (Port 4455)
+try:
+    cl = obs.ReqClient(host='localhost', port=4455, timeout=3)
+    print("[OBS] Connected successfully to OBS Studio!")
+except Exception as e:
+    cl = None
+    print("[OBS] Could not connect to OBS Studio. (Make sure OBS is open with WebSocket enabled).")
+
+def handle_action(command):
+    if not cl:
+        return
+        
+    if command == "MUTE_MIC":
+        cl.toggle_input_mute("Mic/Aux")
+        print(" -> OBS Action Executed: Toggled Mute for 'Mic/Aux'")
+        
+    elif command == "TOGGLE_CAM":
+        # Example: Toggles source visibility named 'Webcam'
+        print(" -> OBS Action Executed: Toggle Camera")
+        
+    elif command == "NEXT_SCENE":
+        # Example: Switch to Scene
+        cl.set_current_program_scene("Gaming Scene")
+        print(" -> OBS Action Executed: Switched Scene")
 
 def start_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((HOST, PORT))
     
-    print("=" * 40)
-    print(f" PSP Stream Deck Receiver Active!")
-    print(f" Listening for signals on port {PORT}...")
-    print(" Press Ctrl + C in this terminal to stop.")
-    print("=" * 40 + "\n")
+    print("\n========================================")
+    print(" PSP Stream Deck Receiver Active!")
+    print(" Listening on port 8888...")
+    print("========================================\n")
 
     while True:
         try:
             data, addr = sock.recvfrom(1024)
             command = data.decode('utf-8').strip()
-            
-            print(f"[RECEIVED from {addr[0]}]: {command}")
-
-            # Map incoming commands to actions
-            if command == "MUTE_MIC":
-                print(" -> Action: Muting/Unmuting Microphone")
-                # Trigger action (e.g. via OBS WebSocket or keyboard shortcut)
-            elif command == "TOGGLE_CAM":
-                print(" -> Action: Toggling Camera")
-            elif command == "NEXT_SCENE":
-                print(" -> Action: Switching Scene")
+            print(f"[RECEIVED]: {command}")
+            handle_action(command)
 
         except KeyboardInterrupt:
-            print("\nShutting down receiver server.")
+            print("\nShutting down receiver.")
             sys.exit()
-        except Exception as e:
-            print(f"Error: {e}")
 
 if __name__ == "__main__":
     start_server()
