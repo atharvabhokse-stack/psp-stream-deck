@@ -1,0 +1,21 @@
+name: Build PSP App
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: pspdev/pspdev:latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Compile PSP EBOOT
+        run: make
+
+      - name: Upload Compiled EBOOT
+        uses: actions/upload-artifact@v3
+        with:
+          name: PSP_EBOOT
+          path: EBOOT.PBP
